@@ -2,30 +2,12 @@ import os
 import datetime
 import random
 from google.cloud import storage
-from google.cloud import secretmanager
 
 
 class MockRequest:
     def __init__(self, args=None, json_body=None):
         self.args = args or {}
         self.json = json_body or {}
-
-
-def get_secret(secret_name):
-    # Function to retrieve secrets based on the environment
-    if os.environ.get('GCP_ENVIRONMENT') == 'true':
-        # Access secret from GCP Secret Manager
-        client = secretmanager.SecretManagerServiceClient()
-        project_id = os.environ.get('GCP_PROJECT_ID')
-        name = f"projects/{project_id}/secrets/{secret_name}/versions/latest"
-        response = client.access_secret_version(request={"name": name})
-        secret_value = response.payload.data.decode("UTF-8")
-    else:
-        # Access secret from local environment variable
-        from dotenv import load_dotenv
-        load_dotenv('../../../.env')
-        secret_value = os.environ.get(secret_name, 'VALUE_NOT_SET')
-    return secret_value
 
 
 def generate_fake_data():
@@ -63,8 +45,8 @@ def data_refresh(request):
     # Use try-except block to handle unexpected errors
     try:
         # Retrieve the Cloud Storage bucket name from Secret Manager
-        bucket_name = get_secret('CLOUD_STORAGE_BUCKET')
-        file_name = 'fitness_data.csv'
+        bucket_name = os.environ.get('CLOUD_STORAGE_BUCKET')
+        file_name = os.environ.get('FITNESS_DATA_FILE')
 
         data_line = generate_fake_data()
         append_to_storage(bucket_name, file_name, data_line)
@@ -78,6 +60,11 @@ def data_refresh(request):
 
 
 def main():
+    # NOTE: main is used for local testing only
+    # load environment variables from .env file
+    from dotenv import load_dotenv
+    load_dotenv('../../../.env')
+    # data_refresh function is triggered by an HTTP request
     mock_request = MockRequest()
     res = data_refresh(mock_request)
     print(res)
