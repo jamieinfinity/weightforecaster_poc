@@ -11,17 +11,22 @@ class MockRequest:
 
 
 app = Flask(__name__)
-CORS(app)  # Enable CORS for all routes
+CORS(app, resources={
+     r"/fetch_fitness_data": {"origins": os.environ.get('CORS_ORIGIN')}})
 
 
 @app.route('/fetch_fitness_data', methods=['GET', 'POST', 'OPTIONS'])
 def fetch_fitness_data(request):
     # Preflight request for CORS
+    cors = os.environ.get('CORS_ORIGIN')
+    if not cors:
+        return jsonify({"error": "CORS_ORIGIN environment variable not set."}), 500
+
     if request.method == 'OPTIONS':
         # Allows GET requests from any origin with the Content-Type header
         # and caches preflight response for an hour
         headers = {
-            'Access-Control-Allow-Origin': '*',  # replace with your app domain in production
+            'Access-Control-Allow-Origin': cors,
             'Access-Control-Allow-Methods': 'GET',
             'Access-Control-Max-Age': '3600',
             'Access-Control-Allow-Headers': 'Content-Type, Authorization'
