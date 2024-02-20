@@ -32,7 +32,7 @@ def append_to_storage(bucket_name, file_name, data_line):
     if blob.exists():
         current_content = blob.download_as_text()
     else:
-        current_content = ''
+        current_content = 'date,weight,calories,steps\n'
 
     # Append the new line of data
     new_content = current_content + data_line
@@ -48,6 +48,9 @@ def data_refresh(request):
         bucket_name = os.environ.get('CLOUD_STORAGE_BUCKET')
         file_name = os.environ.get('FITNESS_DATA_FILE')
 
+        if not bucket_name or not file_name:
+            return ("Bucket or file name environment variables not set.", 500)
+
         data_line = generate_fake_data()
         append_to_storage(bucket_name, file_name, data_line)
 
@@ -55,8 +58,7 @@ def data_refresh(request):
         return f'Appended new data to {file_name} in bucket {bucket_name}'
 
     except Exception as e:
-        print(f'Error: {e}')
-        return f'Error: {e}', 500
+        return (str(e), 500)
 
 
 def main():
