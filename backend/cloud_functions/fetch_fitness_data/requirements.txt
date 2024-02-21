@@ -1,4 +1,2 @@
 google-cloud-storage
-flask<3.0,>=1.0
-flask-cors 
 # dotenv # for environment variables for local testing
